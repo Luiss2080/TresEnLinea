@@ -1,0 +1,18 @@
+{
+  "partidas_totales": 9,
+  "victorias_jugador": 0,
+  "victorias_ia": 8,
+  "empates": 1,
+  "fecha_primera_partida": "2025-09-05 18:45:22",
+  "fecha_ultima_partida": "2025-09-07 13:57:29",
+  "mejor_racha_jugador": 0,
+  "mejor_racha_ia": 1,
+  "tiempo_promedio_partida": 0,
+  "configuracion": {
+    "jugador_simbolo": "X",
+    "ia_simbolo": "O",
+    "dificultad": "invencible",
+    "sonidos_activados": true,
+    "animaciones_activadas": true
+  }
+}
