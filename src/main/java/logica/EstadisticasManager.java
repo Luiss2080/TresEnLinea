@@ -85,25 +85,35 @@ public class EstadisticasManager {
     private void cargarEstadisticas() {
         try {
             Path archivoPath = Paths.get(ARCHIVO_ESTADISTICAS);
-            
+
             if (!Files.exists(archivoPath)) {
-                Files.createDirectories(archivoPath.getParent());
-                inicializarEstadisticasDefault();
-                guardarEstadisticas();
+                recuperarConValoresPorDefecto("no existe un archivo de estadísticas previo");
                 return;
             }
-            
+
             String contenido = Files.readString(archivoPath);
             parseJson(contenido);
-            
+
         } catch (IOException e) {
-            System.err.println("Error al cargar estadísticas: " + e.getMessage());
-            inicializarEstadisticasDefault();
+            // Archivo ilegible (binario corrupto, bytes invalidos, permisos, etc.)
+            recuperarConValoresPorDefecto("no se pudo leer el archivo (" + e.getMessage() + ")");
         }
     }
-    
+
     private void parseJson(String json) {
         try {
+            if (!pareceUnArchivoDeEstadisticasValido(json)) {
+                // extraerValorEntero/extraerValorString nunca lanzan excepcion: si una
+                // clave no aparece, simplemente devuelven 0/null. Eso significa que un
+                // texto basura o un JSON de un esquema totalmente distinto (formato
+                // incompatible/antiguo) NO dispara el catch de abajo por si solo -
+                // silenciosamente "cargaria" un archivo que en realidad no es nuestro.
+                // Por eso se valida explicitamente que el archivo contenga al menos
+                // una de las claves que generarJson() siempre escribe juntas.
+                recuperarConValoresPorDefecto("el archivo no tiene el formato esperado de estadisticas (JSON invalido o de otro esquema)");
+                return;
+            }
+
             partidasTotales = extraerValorEntero(json, "partidas_totales");
             victoriasJugador = extraerValorEntero(json, "victorias_jugador");
             victoriasIA = extraerValorEntero(json, "victorias_ia");
@@ -113,9 +123,38 @@ public class EstadisticasManager {
             fechaPrimeraPartida = extraerValorString(json, "fecha_primera_partida");
             fechaUltimaPartida = extraerValorString(json, "fecha_ultima_partida");
         } catch (Exception e) {
-            System.err.println("Error al parsear JSON: " + e.getMessage());
-            inicializarEstadisticasDefault();
+            // Red de seguridad por si algo inesperado igual lanza una excepcion.
+            recuperarConValoresPorDefecto("no se pudo interpretar el archivo (" + e.getMessage() + ")");
         }
+    }
+
+    /**
+     * Un archivo genuino de estadisticas siempre trae estas claves, porque
+     * generarJson() las escribe todas juntas cada vez que se guarda. Si el
+     * contenido no trae ninguna, es basura, texto no-JSON, o un esquema
+     * completamente distinto (version vieja/incompatible) - en cualquier
+     * caso, no son datos que debamos intentar interpretar campo por campo.
+     */
+    private boolean pareceUnArchivoDeEstadisticasValido(String json) {
+        return json.contains("\"partidas_totales\"")
+            || json.contains("\"victorias_jugador\"")
+            || json.contains("\"victorias_ia\"")
+            || json.contains("\"empates\"");
+    }
+
+    /**
+     * Restaura el estado en memoria a los valores por defecto y reescribe de
+     * inmediato un archivo valido en disco, en vez de dejar el archivo
+     * faltante, corrupto o incompatible tal cual estaba. Sin esto, un
+     * archivo dañado se quedaba en disco hasta que terminara la siguiente
+     * partida (la próxima llamada a guardarEstadisticas()), lo cual dejaba
+     * una ventana en la que herramientas externas o un reinicio a medias
+     * seguían viendo el archivo corrupto en vez de datos válidos en cero.
+     */
+    private void recuperarConValoresPorDefecto(String motivo) {
+        System.err.println("Estadísticas reiniciadas a valores por defecto: " + motivo);
+        inicializarEstadisticasDefault();
+        guardarEstadisticas();
     }
     
     private int extraerValorEntero(String json, String clave) {
