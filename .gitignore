@@ -1,0 +1,17 @@
+# Maven
+target/
+
+# Compiled classes from the plain javac/ejecutar.bat workflow
+bin/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# OS
+.DS_Store
+Thumbs.db
