@@ -49,11 +49,11 @@ public class PanelTablero extends JPanel {
         boton.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                if (boton.getText().isEmpty() && ventanaPrincipal.isJuegoActivo()) {
+                if (boton.getText().isEmpty() && ventanaPrincipal.puedeJugarHumano()) {
                     boton.setBackground(new Color(100, 149, 237));
                 }
             }
-            
+
             @Override
             public void mouseExited(java.awt.event.MouseEvent evt) {
                 if (boton.getText().isEmpty()) {
@@ -61,11 +61,11 @@ public class PanelTablero extends JPanel {
                 }
             }
         });
-        
+
         boton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (ventanaPrincipal.isJuegoActivo() && boton.getText().isEmpty()) {
+                if (ventanaPrincipal.puedeJugarHumano() && boton.getText().isEmpty()) {
                     ventanaPrincipal.hacerMovimientoJugador(fila, columna);
                 }
             }
@@ -97,7 +97,7 @@ public class PanelTablero extends JPanel {
                     }
                 }
                 
-                boton.setEnabled(casilla == Tablero.VACIO && ventanaPrincipal.isJuegoActivo());
+                boton.setEnabled(casilla == Tablero.VACIO && ventanaPrincipal.puedeJugarHumano());
             }
         }
         
