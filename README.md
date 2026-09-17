@@ -1,144 +1,107 @@
-# 🎮 Tres en Raya con IA Minimax
+# 🎮 TresEnLinea
 
-¡Un juego clásico con inteligencia artificial invencible! Desafía al algoritmo Minimax y pon a prueba tu estrategia. 🧠
+Tres en raya de escritorio en Java con una IA Minimax cuya invencibilidad
+fue verificada recorriendo el árbol de juego **completo** (no partidas de
+muestra), interfaz Swing con animaciones y estadísticas persistentes en
+JSON que se auto-repara si el archivo falta o está corrupto. Pensado para
+quien quiera un ejemplo compacto y bien probado de Minimax, arquitectura
+MVC e hilos correctos en Swing.
 
-## ✨ Características
+## Características
 
-- 🤖 **IA Invencible** - Algoritmo Minimax que nunca pierde
-- 📊 **Sistema de Estadísticas** - Guarda tu historial de partidas
-- 🎨 **Interfaz Atractiva** - Diseño moderno con efectos visuales
-- ⚡ **Respuesta Rápida** - Jugabilidad fluida y sin bloqueos
-- 📱 **Fácil de Usar** - Interfaz intuitiva con un clic
+- 🤖 **IA Minimax invencible, verificada de forma exhaustiva** — un test
+  automatizado recorre las 569 partidas posibles con el humano moviendo
+  primero (386 victorias de la IA, 183 empates, **0 derrotas**) y las 73
+  partidas posibles si la IA mueve primero (71 victorias, 2 empates, 0
+  derrotas). El mejor resultado posible para el humano es el empate.
+- 🧠 **Puntuación con profundidad**: el Minimax prefiere ganar rápido y
+  perder tarde (`10 - profundidad` / `profundidad - 10`), no solo ganar.
+- 🎨 **Interfaz Swing** con look and feel Nimbus, splash screen animado,
+  efectos de victoria/derrota/empate y resaltado al pasar el mouse.
+- 🔒 **Turnos protegidos**: mientras la IA "piensa" (retraso de 500ms), el
+  tablero se deshabilita y no acepta un segundo movimiento del jugador.
+- 📊 **Estadísticas persistentes en JSON** (partidas, victorias, empates,
+  rachas, fechas) sin librerías externas — y auto-reparables: si el
+  archivo no existe, está corrupto, es binario ilegible o pertenece a un
+  esquema incompatible, la app cae a valores por defecto y reescribe un
+  archivo válido de inmediato, en vez de fallar o quedar en un estado raro.
+- 🧵 **Manejo de hilos centralizado**: toda actualización de la UI pasa
+  por `GestorHilos`, que garantiza que nada fuera del Event Dispatch
+  Thread de Swing toque un componente gráfico.
+- ✅ **Suite de pruebas JUnit 5**, incluida la verificación exhaustiva de
+  invencibilidad, detección de victoria/empate en cada línea del tablero,
+  y los cuatro escenarios de persistencia corrupta mencionados arriba.
+- ⚙️ **CI con GitHub Actions**: cada push/PR compila y corre las pruebas
+  automáticamente.
 
-## 🚀 Cómo Ejecutar
+## Cómo usar
 
-### 🔧 Compilación Rápida
+1. Ejecuta la aplicación (ver instalación abajo). Tú juegas con **X**, la
+   IA con **O**, y tú siempre mueves primero.
+2. Haz clic en cualquier casilla vacía. La IA responde automáticamente
+   tras un breve instante.
+3. Objetivo: conseguir tres en línea. Como la IA es invencible, tu mejor
+   resultado realista es un empate.
+4. Usa **Nueva Partida** para reiniciar el tablero y **Reset Stats** para
+   borrar el historial guardado en `datos/estadisticas.json`.
+
+## Instalación y uso local
+
+Requiere JDK 17 o superior.
+
+**Con Maven** (recomendado — también compila y corre las pruebas):
+
 ```bash
-# Navegar al directorio del proyecto
-cd "3-En-Raya"
+mvn package
+java -jar target/tres-en-linea.jar
+```
 
-# Compilar todos los archivos
-javac -cp "src/main/java" -d "bin" src/main/java/**/*.java
+**Sin Maven, con javac directamente** (como estaba originalmente el
+proyecto):
 
-# Ejecutar el juego
+```bash
+javac -cp "src/main/java" -d "bin" src/main/java/main/Main.java src/main/java/logica/*.java src/main/java/presentacion/*.java
 java -cp "bin" main.Main
 ```
 
-### 🎯 Ejecución Directa
-Si ya está compilado:
+En Windows también puedes usar el script incluido:
+
 ```bash
-java -cp "bin" main.Main
+ejecutar.bat
 ```
 
-## 📁 Estructura del Proyecto
+## Tecnologías
 
-```
-3-En-Raya/
-│
-├── 📂 src/main/java/           # Código fuente principal
-│   ├── 🎯 main/               # Punto de entrada
-│   │   └── Main.java          # Clase principal con splash screen
-│   │
-│   ├── 🧠 logica/             # Núcleo del juego
-│   │   ├── Tablero.java       # Gestión del tablero 3x3
-│   │   ├── MinimaxIA.java     # Algoritmo de inteligencia artificial
-│   │   └── EstadisticasManager.java # Persistencia de datos
-│   │
-│   └── 🎨 presentacion/       # Interfaz gráfica
-│       ├── VentanaPrincipal.java    # Ventana principal del juego
-│       ├── PanelTablero.java        # Grid de botones del tablero
-│       ├── PanelControles.java      # Controles y estado del juego
-│       ├── EfectosVisuales.java     # Animaciones y notificaciones
-│       └── GestorHilos.java         # Manejo de hilos para UI fluida
-│
-├── 📦 bin/                    # Archivos compilados (.class)
-│
-├── 💾 datos/                  # Archivos de datos
-│   └── estadisticas.json      # Historial de partidas guardado
-│
-└── 📖 README.md              # Este archivo
+- **Java 17+** (compilado y probado con JDK 21)
+- **Swing** para la interfaz gráfica (sin frameworks de UI externos)
+- **Maven** para build y gestión de dependencias
+- **JUnit 5** para las pruebas automatizadas
+- **GitHub Actions** para integración continua
+- JSON de estadísticas escrito/leído a mano, sin librerías externas
+
+## Arquitectura
+
+Patrón MVC simple: `logica/` (Tablero, MinimaxIA, EstadisticasManager) no
+depende de Swing y es completamente testeable por sí sola; `presentacion/`
+contiene la interfaz gráfica y el manejo de hilos (`GestorHilos`); `main/`
+es el punto de entrada.
+
+## Tests
+
+```bash
+mvn test
 ```
 
-## 🎮 Cómo Jugar
+Incluye, entre otras:
+- Verificación exhaustiva de que la IA nunca pierde (ambas
+  configuraciones: IA primero y humano primero).
+- Detección de victoria en las 3 filas, 3 columnas y ambas diagonales, y
+  de empate con el tablero lleno.
+- Persistencia resiliente ante archivo faltante, JSON corrupto, esquema
+  incompatible y datos binarios ilegibles.
+- Contrato de hilos de `GestorHilos` (EDT).
+- Regresión del bug de doble clic durante el turno de la IA.
 
-1. **🟦 Tu turno**: Haz clic en cualquier casilla vacía (eres **X**)
-2. **🤖 Turno IA**: La IA responde automáticamente (es **O**)
-3. **🎯 Objetivo**: Consigue 3 en línea (horizontal, vertical o diagonal)
-4. **🏆 Meta realista**: ¡Intenta conseguir un empate! (La IA no pierde)
+## Licencia
 
-### 🕹️ Controles
-- **Nueva Partida** - Reinicia el tablero
-- **Estadísticas** - Ver tu historial completo
-- **Reset Stats** - Borrar todas las estadísticas
-- **Ayuda** - Mostrar información del juego
-- **Salir** - Cerrar la aplicación
-
-## 🧠 Sobre la IA
-
-La IA utiliza el **algoritmo Minimax**, una técnica de búsqueda que:
-- 🔍 **Explora** todos los movimientos posibles
-- 📊 **Evalúa** cada posición del tablero
-- 🎯 **Elige** siempre el mejor movimiento
-- 🛡️ **Garantiza** que nunca perderá
-
-> **Dato curioso**: En un tablero de 3x3, existen 255,168 estados posibles del juego, ¡y la IA los conoce todos!
-
-## 📊 Sistema de Estadísticas
-
-El juego rastrea automáticamente:
-- 📈 **Partidas Totales** jugadas
-- 🏆 **Tus Victorias** (si las hay 😉)
-- 🤖 **Victorias de la IA**
-- 🤝 **Empates** conseguidos
-- 🔥 **Rachas** actuales y mejores
-- 📅 **Fechas** de primera y última partida
-
-## ⚙️ Requisitos Técnicos
-
-- ☕ **Java 21+** (compatible con versiones anteriores desde Java 8)
-- 🖥️ **Sistema Operativo**: Windows, macOS, Linux
-- 💾 **RAM**: Mínimo 512MB disponibles
-- 📦 **Espacio**: ~2MB para el proyecto completo
-
-## 🛠️ Para Desarrolladores
-
-### 🏗️ Arquitectura
-- **Patrón MVC**: Separación clara entre lógica y presentación
-- **Swing**: Interfaz gráfica nativa de Java
-- **JSON Manual**: Persistencia sin librerías externas
-- **Hilos**: Gestión cuidadosa para UI responsiva
-
-### 🔧 Extensiones Posibles
-- 🎨 Temas personalizables
-- 🔊 Efectos de sonido
-- 🌐 Modo multijugador online
-- 📱 Versión móvil con JavaFX
-- 🤖 Diferentes niveles de dificultad
-
-## 🎯 Estrategia Recomendada
-
-Como la IA es invencible, aquí algunos consejos para conseguir empates:
-
-1. **🎯 Centro primero**: Siempre juega en el centro si está disponible
-2. **🛡️ Bloquea amenazas**: Impide que la IA haga líneas de 2
-3. **⚔️ Crea dilemas**: Intenta crear dos amenazas simultáneas
-4. **🧠 Piensa adelante**: Anticipa los movimientos de la IA
-
-## 📜 Historia del Proyecto
-
-Este proyecto surgió como una demostración del algoritmo Minimax aplicado a un juego clásico. La implementación se enfoca en:
-
-- ✅ **Código limpio** y bien documentado
-- ✅ **Interfaz intuitiva** para usuarios de cualquier nivel
-- ✅ **Rendimiento óptimo** sin librerías externas
-- ✅ **Experiencia fluida** sin bloqueos o lag
-
-## 🎊 ¡Disfruta el Desafío!
-
-¿Serás capaz de conseguir un empate contra la IA invencible? 
-
-**¡Dale una oportunidad y descúbrelo!** 🎮
-
----
-
-*Proyecto educativo - Perfecto para aprender sobre algoritmos de búsqueda, interfaces gráficas en Java y arquitectura de software* 📚
+MIT — ver [LICENSE](LICENSE).
