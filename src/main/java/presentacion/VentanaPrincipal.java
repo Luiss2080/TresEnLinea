@@ -13,7 +13,13 @@ public class VentanaPrincipal extends JFrame {
     private Tablero tablero;
     private EstadisticasManager estadisticas;
     private boolean juegoActivo;
-    
+    // true entre el momento en que el jugador mueve y el momento en que la IA
+    // responde (mientras corre el retraso de 500ms de "la IA esta pensando").
+    // Sin esta bandera, juegoActivo por si solo no bastaba para bloquear al
+    // jugador durante ese intervalo: el jugador podia hacer clic en otra
+    // casilla vacia y colocar una segunda X antes de que la IA moviera.
+    private boolean esperandoIA;
+
     private JPanel labelPartidas;
     private JPanel labelTu;
     private JPanel labelIA;
@@ -173,7 +179,8 @@ public class VentanaPrincipal extends JFrame {
     
     public void nuevaPartida() {
         juegoActivo = false;
-        
+        esperandoIA = false;
+
         Timer resetTimer = new Timer(100, e -> {
             tablero.reiniciar();
             juegoActivo = true;
@@ -183,37 +190,64 @@ public class VentanaPrincipal extends JFrame {
         resetTimer.setRepeats(false);
         resetTimer.start();
     }
-    
+
     public void hacerMovimientoJugador(int fila, int columna) {
-        if (!juegoActivo) return;
-        
+        if (!puedeJugarHumano()) return;
+
         if (tablero.hacerMovimiento(fila, columna, Tablero.JUGADOR_X)) {
+            // Bloquear al jugador de inmediato: hasta que la IA responda (o el
+            // juego termine), ningun otro clic en el tablero debe surtir efecto.
+            esperandoIA = true;
+
+            if (verificarFinJuego()) {
+                esperandoIA = false;
+                panelTablero.actualizarTablero();
+                return;
+            }
+
             panelTablero.actualizarTablero();
-            
-            if (verificarFinJuego()) return;
-            
+
             GestorHilos.ejecutarConRetraso(() -> {
                 if (juegoActivo) {
                     hacerMovimientoIA();
+                } else {
+                    esperandoIA = false;
                 }
             }, 500);
         }
     }
-    
+
     private void hacerMovimientoIA() {
-        if (!juegoActivo) return;
-        
+        if (!juegoActivo) {
+            esperandoIA = false;
+            return;
+        }
+
         try {
             MinimaxIA.Movimiento movimiento = MinimaxIA.obtenerMejorMovimiento(tablero);
-            
+
             if (movimiento != null && movimiento.fila != -1 && movimiento.columna != -1 && juegoActivo) {
                 tablero.hacerMovimiento(movimiento.fila, movimiento.columna, Tablero.JUGADOR_O);
-                panelTablero.actualizarTablero();
+                esperandoIA = false;
                 verificarFinJuego();
+                panelTablero.actualizarTablero();
+            } else {
+                esperandoIA = false;
             }
         } catch (Exception e) {
             System.err.println("Error en movimiento de IA: " + e.getMessage());
+            // No dejar el tablero bloqueado para siempre si la IA falla.
+            esperandoIA = false;
+            panelTablero.actualizarTablero();
         }
+    }
+
+    /**
+     * true si el humano puede hacer un movimiento ahora mismo: la partida
+     * esta activa y no se esta esperando la respuesta de la IA.
+     */
+    public boolean puedeJugarHumano() {
+        return juegoActivo && !esperandoIA;
     }
     
     private boolean verificarFinJuego() {
