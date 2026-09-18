@@ -1,107 +1,125 @@
-# 🎮 TresEnLinea
+<div align="center">
+  <img src="docs/assets/logo.svg" width="96" alt="Logo de TresEnLinea" />
+  <h1>TresEnLinea</h1>
+  <p><b>Tres en raya de escritorio en Java con una IA Minimax que nunca pierde, verificada sobre todo el árbol de juego.</b></p>
+  <img src="https://img.shields.io/badge/estado-funcional-25A162?style=for-the-badge" alt="Estado: funcional" />
+  <img src="https://img.shields.io/badge/Java-17%2B-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java 17+" />
+  <img src="https://img.shields.io/badge/tests-26_JUnit_5-25A162?style=for-the-badge" alt="26 tests" />
+  <img src="https://github.com/Luiss2080/TresEnLinea/actions/workflows/ci.yml/badge.svg" alt="CI" />
+  <p>
+    <a href="#-inicio-rápido">Inicio rápido</a> ·
+    <a href="#-características">Características</a> ·
+    <a href="#-arquitectura">Arquitectura</a> ·
+    <a href="#-pruebas">Pruebas</a> ·
+    <a href="#-lo-que-todavía-no-existe">Limitaciones</a>
+  </p>
+</div>
 
-Tres en raya de escritorio en Java con una IA Minimax cuya invencibilidad
-fue verificada recorriendo el árbol de juego **completo** (no partidas de
-muestra), interfaz Swing con animaciones y estadísticas persistentes en
-JSON que se auto-repara si el archivo falta o está corrupto. Pensado para
-quien quiera un ejemplo compacto y bien probado de Minimax, arquitectura
-MVC e hilos correctos en Swing.
+TresEnLinea es un tres en raya para un jugador (tú con **X**, la IA con **O**) con interfaz Swing y
+estadísticas guardadas en un archivo JSON. Es un ejemplo compacto de Minimax, separación lógica/interfaz y
+manejo de hilos en Swing. No tiene modo de dos jugadores ni ajuste de dificultad: la IA siempre juega de
+forma óptima, así que lo mejor que puedes lograr es un empate.
 
-## Características
+## 🎬 Vista rápida
 
-- 🤖 **IA Minimax invencible, verificada de forma exhaustiva** — un test
-  automatizado recorre las 569 partidas posibles con el humano moviendo
-  primero (386 victorias de la IA, 183 empates, **0 derrotas**) y las 73
-  partidas posibles si la IA mueve primero (71 victorias, 2 empates, 0
-  derrotas). El mejor resultado posible para el humano es el empate.
-- 🧠 **Puntuación con profundidad**: el Minimax prefiere ganar rápido y
-  perder tarde (`10 - profundidad` / `profundidad - 10`), no solo ganar.
-- 🎨 **Interfaz Swing** con look and feel Nimbus, splash screen animado,
-  efectos de victoria/derrota/empate y resaltado al pasar el mouse.
-- 🔒 **Turnos protegidos**: mientras la IA "piensa" (retraso de 500ms), el
-  tablero se deshabilita y no acepta un segundo movimiento del jugador.
-- 📊 **Estadísticas persistentes en JSON** (partidas, victorias, empates,
-  rachas, fechas) sin librerías externas — y auto-reparables: si el
-  archivo no existe, está corrupto, es binario ilegible o pertenece a un
-  esquema incompatible, la app cae a valores por defecto y reescribe un
-  archivo válido de inmediato, en vez de fallar o quedar en un estado raro.
-- 🧵 **Manejo de hilos centralizado**: toda actualización de la UI pasa
-  por `GestorHilos`, que garantiza que nada fuera del Event Dispatch
-  Thread de Swing toque un componente gráfico.
-- ✅ **Suite de pruebas JUnit 5**, incluida la verificación exhaustiva de
-  invencibilidad, detección de victoria/empate en cada línea del tablero,
-  y los cuatro escenarios de persistencia corrupta mencionados arriba.
-- ⚙️ **CI con GitHub Actions**: cada push/PR compila y corre las pruebas
-  automáticamente.
+Captura real de una partida en curso (la IA ya respondió a tres jugadas; los datos son de una ejecución de prueba):
 
-## Cómo usar
+<div align="center">
+  <img src="docs/screenshots/partida.png" width="360" alt="TresEnLinea: tablero de 3x3 con X y O, botones superiores y panel de estadísticas" />
+</div>
 
-1. Ejecuta la aplicación (ver instalación abajo). Tú juegas con **X**, la
-   IA con **O**, y tú siempre mueves primero.
-2. Haz clic en cualquier casilla vacía. La IA responde automáticamente
-   tras un breve instante.
-3. Objetivo: conseguir tres en línea. Como la IA es invencible, tu mejor
-   resultado realista es un empate.
-4. Usa **Nueva Partida** para reiniciar el tablero y **Reset Stats** para
-   borrar el historial guardado en `datos/estadisticas.json`.
+## ✨ Características
 
-## Instalación y uso local
+| Característica | Detalle |
+|:---|:---|
+| IA Minimax | Puntuación con profundidad (`10 - profundidad` / `profundidad - 10`): prefiere ganar rápido y perder tarde |
+| Invencibilidad verificada | Un test recorre todas las partidas posibles: 569 con el humano primero (386 victorias IA, 183 empates, 0 derrotas) y 73 con la IA primero (71 victorias, 2 empates, 0 derrotas) |
+| Turnos protegidos | Mientras la IA "piensa" (retraso de 500 ms) no se acepta un segundo movimiento del jugador |
+| Hilos | `GestorHilos` centraliza las actualizaciones de UI en el Event Dispatch Thread |
+| Estadísticas en JSON | Partidas, victorias, empates, rachas y fechas en `datos/estadisticas.json`, sin librerías externas |
+| Autorreparación | Si el archivo falta, está corrupto, es ilegible o tiene otro esquema, se reinicia con valores por defecto |
+| Interfaz | Swing con Nimbus, pantalla de carga de 2 s, efectos de resultado y resaltado de casillas; botones Nueva Partida, Ayuda, Reset Stats y Salir |
 
-Requiere JDK 17 o superior.
+## 🏗️ Arquitectura
 
-**Con Maven** (recomendado — también compila y corre las pruebas):
-
-```bash
-mvn package
-java -jar target/tres-en-linea.jar
+```mermaid
+flowchart LR
+    Main["main.Main<br/>(Nimbus + splash)"] --> Ventana["presentacion.VentanaPrincipal"]
+    Ventana --> PT["PanelTablero"]
+    Ventana --> PC["PanelControles"]
+    Ventana --> Ef["EfectosVisuales"]
+    Ventana --> GH["GestorHilos<br/>(EDT)"]
+    Ventana --> Tab["logica.Tablero"]
+    Ventana --> IA["logica.MinimaxIA"]
+    Ventana --> Est["logica.EstadisticasManager"]
+    IA --> Tab
+    Est --> JSON[("datos/estadisticas.json")]
 ```
 
-**Sin Maven, con javac directamente** (como estaba originalmente el
-proyecto):
+`logica/` no depende de Swing y se prueba sola; `presentacion/` contiene la interfaz.
 
-```bash
-javac -cp "src/main/java" -d "bin" src/main/java/main/Main.java src/main/java/logica/*.java src/main/java/presentacion/*.java
-java -cp "bin" main.Main
+<details>
+<summary>Estructura de carpetas</summary>
+
+```text
+TresEnLinea/
+├── pom.xml
+├── ejecutar.bat
+├── datos/estadisticas.json
+├── src/main/java/{main,logica,presentacion}/
+├── src/test/java/{logica,presentacion}/
+└── .github/workflows/ci.yml
 ```
 
-En Windows también puedes usar el script incluido:
+</details>
 
-```bash
-ejecutar.bat
-```
+## 🚀 Inicio rápido
 
-## Tecnologías
+| Requisito | Versión |
+|:---|:---|
+| JDK | 17 o superior (el `pom.xml` compila a 17; probado con un JDK reciente) |
+| Maven | Opcional: solo para empaquetar y correr las pruebas |
 
-- **Java 17+** (compilado y probado con JDK 21)
-- **Swing** para la interfaz gráfica (sin frameworks de UI externos)
-- **Maven** para build y gestión de dependencias
-- **JUnit 5** para las pruebas automatizadas
-- **GitHub Actions** para integración continua
-- JSON de estadísticas escrito/leído a mano, sin librerías externas
+1. Clona el repositorio:
+   ```bash
+   git clone https://github.com/Luiss2080/TresEnLinea.git
+   cd TresEnLinea
+   ```
+2. Con Maven (genera `target/tres-en-linea.jar`):
+   ```bash
+   mvn package
+   java -jar target/tres-en-linea.jar
+   ```
+3. O sin Maven:
+   ```bash
+   javac -encoding UTF-8 -d bin src/main/java/main/Main.java src/main/java/logica/*.java src/main/java/presentacion/*.java
+   java -cp bin main.Main
+   ```
+   En Windows también sirve `ejecutar.bat`.
 
-## Arquitectura
+Haz clic en una casilla vacía; la IA responde sola. **Nueva Partida** reinicia el tablero y **Reset Stats**
+borra el historial.
 
-Patrón MVC simple: `logica/` (Tablero, MinimaxIA, EstadisticasManager) no
-depende de Swing y es completamente testeable por sí sola; `presentacion/`
-contiene la interfaz gráfica y el manejo de hilos (`GestorHilos`); `main/`
-es el punto de entrada.
-
-## Tests
+## 🧪 Pruebas
 
 ```bash
 mvn test
 ```
 
-Incluye, entre otras:
-- Verificación exhaustiva de que la IA nunca pierde (ambas
-  configuraciones: IA primero y humano primero).
-- Detección de victoria en las 3 filas, 3 columnas y ambas diagonales, y
-  de empate con el tablero lleno.
-- Persistencia resiliente ante archivo faltante, JSON corrupto, esquema
-  incompatible y datos binarios ilegibles.
-- Contrato de hilos de `GestorHilos` (EDT).
-- Regresión del bug de doble clic durante el turno de la IA.
+Hay **26 pruebas** JUnit 5 (verificadas localmente con `mvn test`: 26 ejecutadas, 0 fallos): invencibilidad
+exhaustiva de la IA (3), reglas del tablero (12), persistencia de estadísticas incluyendo archivo faltante,
+corrupto, binario o de otro esquema (7), contrato de hilos (3) y la regresión del doble clic durante el
+turno de la IA (1). Las pruebas que crean una ventana Swing se saltan si no hay pantalla (en el CI se usa Xvfb).
 
-## Licencia
+## 🚧 Lo que todavía no existe
 
-MIT — ver [LICENSE](LICENSE).
+- Modo de dos jugadores, elección de símbolo o de quién mueve primero: el humano siempre es **X** y siempre empieza.
+- Niveles de dificultad: la IA es siempre óptima.
+- Tablero mayor de 3×3.
+- `datos/estadisticas.json` está versionado con datos de ejemplo y la app lo sobrescribe al jugar (ruta relativa al directorio de ejecución).
+
+## 📄 Licencia
+
+MIT. Consulta [`LICENSE`](LICENSE).
+
+<div align="center"><sub>Hecho por Luiss2080 · Java, Swing y Minimax</sub></div>
